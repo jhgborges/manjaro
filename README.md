@@ -10,8 +10,8 @@
 
 Após a instalação, execute:
 
-chmod 711 /home/jhgb
+- chmod 711 /home/jhgb
 
-mkdir /home/jhgb/public_html
+- mkdir /home/jhgb/public_html
 
-chmod 755 /home/jhgb/public_html
+- chmod 755 /home/jhgb/public_html
