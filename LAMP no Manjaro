@@ -1,0 +1,12 @@
+1. Execute su -l root
+2. pacman -S apache
+3. systemctl enable --now httpd
+4. pacman -S mariadb
+5. mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+6. systemctl enable --now mariadb
+7. mariadb-secure-installation
+8. pacman -S php php-apache
+9. pacman -S phpmyadmin
+10. Copie os arquivos de configuração já ajustados ao seu destino
+11. sed -i -e "/blowfish/s/''/'$(openssl rand -hex 16)'/gi" /etc/webapps/phpmyadmin/config.inc.php
+echo "\$cfg['TempDir'] = '/tmp';" >> /etc/webapps/phpmyadmin/config.inc.php
