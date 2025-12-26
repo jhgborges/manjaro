@@ -1,0 +1,89 @@
+# Instala PHP, a extensão GD, Git, Composer e PHP-FPM
+sudo pacman -S php php-gd git composer php-fpm
+
+# Acessa o console do MySQL (use sua senha de root)
+sudo mysql -u root -p
+
+CREATE DATABASE bookstackdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'bookstackuser'@'localhost' IDENTIFIED BY 'SUA_SENHA_FORTE_AQUI';
+GRANT ALL ON bookstackdb.* TO 'bookstackuser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+# Baixa o código para o diretório de instalação
+sudo git clone https://github.com/BookStackApp/BookStack.git --branch release --single-branch /srv/http/bookstack
+
+# Entra no diretório da aplicação
+cd /srv/http/bookstack
+
+# Cria o arquivo de configuração de ambiente (.env)
+sudo cp .env.example .env
+
+# Instala as dependências do Composer
+sudo composer install --no-dev
+
+# Gera a chave de segurança da aplicação
+sudo php artisan key:generate
+
+# Altere o arquivo .env
+APP_URL=http://localhost
+APP_ENV=production
+# ...
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=bookstackdb
+DB_USERNAME=bookstackuser
+DB_PASSWORD=SUA_SENHA_FORTE_AQUI
+
+# Garanta que o usuário do servidor web http (no Manjaro) possa ler o código e escrever nos diretórios de log e cache
+# Ajusta a propriedade de todos os arquivos para o usuário do Apache (http)
+sudo chown -R http:http .
+
+# Ajusta as permissões de escrita/leitura nas pastas storage e cache (775)
+sudo chmod -R 775 storage
+sudo chmod -R 775 bootstrap/cache
+
+# Garante que o .env tenha permissão de leitura
+sudo chmod 644 .env
+
+# Habilite o serviço PHP-FPM e configure o arquivo de configuração principal do Apache para apontar para a pasta public e usar as regras de reescrita.
+# Habilita e inicia o PHP-FPM
+sudo systemctl enable php-fpm
+sudo systemctl start php-fpm
+
+# Abre a configuração principal do Apache
+sudo nano /etc/httpd/conf/httpd.conf
+
+# Descomente as linhas:
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
+LoadModule rewrite_module modules/mod_rewrite.so
+
+# Ajuste o DocumentRoot
+DocumentRoot "/srv/http/bookstack/public"
+
+<Directory "/srv/http/bookstack/public">
+    Options -Indexes +FollowSymLinks
+    AllowOverride All  # CRUCIAL para o .htaccess do Laravel
+    Require all granted
+</Directory>
+
+# Adicione o manipulador php-fpm no final do arquivo
+<FilesMatch \.php$>
+    SetHandler "proxy:unix:/run/php-fpm/php-fpm.sock|fcgi://localhost/"
+</FilesMatch>
+
+# Finalização e lançamento
+cd /srv/http/bookstack/
+
+# Executa a migração do banco de dados (criação das tabelas)
+sudo php artisan migrate
+
+# Limpa o cache de configuração
+sudo php artisan config:clear
+
+# Reinicia o serviço Apache
+sudo systemctl restart httpd
+
+O BookStack está acessível em http://localhost com as credenciais iniciais: E-mail: admin@admin.com e Senha: password.
