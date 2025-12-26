@@ -1,0 +1,11 @@
+# Atualizar a máquina local com o repositório
+git pull
+
+# Preparar o push
+git add .
+
+# Documenta o commit
+git commit
+
+# Efetua o push
+git push
